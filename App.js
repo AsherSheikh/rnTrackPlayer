@@ -5,6 +5,8 @@ import {
   Text,
   ActivityIndicator,
   Pressable,
+  StatusBar,
+  View,
 } from 'react-native';
 import TrackPlayer from 'react-native-track-player';
 import { addTracks, getLocalMusicFiles, setupPlayer } from './src/trackPlayerServices';
@@ -57,7 +59,9 @@ function App() {
   }
 
   return (
+
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle={'light-content'} backgroundColor={'transparent'} translucent />
       <Header />
       <TrackProgress />
       <Playlist />
@@ -70,7 +74,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: 20,
-    backgroundColor: '#232'
+    backgroundColor: '#1F1D2B'
   },
 });
 

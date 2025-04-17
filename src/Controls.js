@@ -2,7 +2,8 @@
 import { useEffect, useState } from 'react';
 import {
   View,
-  Pressable, Text
+  Pressable, Text,
+  StyleSheet
 } from 'react-native';
 import TrackPlayer, {
   useTrackPlayerEvents,
@@ -13,10 +14,15 @@ import TrackPlayer, {
 } from 'react-native-track-player';
 import Slider from '@react-native-community/slider';
 import { getLocalMusicFiles } from './trackPlayerServices';
+import AntDesign from 'react-native-vector-icons/AntDesign'
+import Entypo from 'react-native-vector-icons/Entypo'
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5'
+import FontAwesome from 'react-native-vector-icons/FontAwesome'
+import Octicons from 'react-native-vector-icons/Octicons'
 
 export function Controls({ onShuffle }) {
   const playerState = usePlaybackState();
-
+  const [volumeLevel, setVolumeLevel] = useState(0)
   async function handlePlayPress() {
     if (await TrackPlayer.getState() == State.Playing) {
       TrackPlayer.pause();
@@ -30,16 +36,16 @@ export function Controls({ onShuffle }) {
 
   async function increaseTrackPlayerVolume() {
     const volume = await TrackPlayer.getVolume();
-    currentVolume = Math.min(volume + 0.1, 1.0);
-    await TrackPlayer.setVolume(currentVolume);
-    console.log('Volume increased to', currentVolume.toFixed(2));
+    const newVolume = Math.min(volume + 0.1, 1.0);
+    await TrackPlayer.setVolume(newVolume);
+    setVolumeLevel(Math.round(newVolume * 10));
   }
 
   async function decreaseTrackPlayerVolume() {
     const volume = await TrackPlayer.getVolume();
-    currentVolume = Math.max(volume - 0.1, 0.0);
-    await TrackPlayer.setVolume(currentVolume);
-    console.log('Volume decreased to', currentVolume.toFixed(2));
+    const newVolume = Math.max(volume - 0.1, 0.0);
+    await TrackPlayer.setVolume(newVolume);
+    setVolumeLevel(Math.round(newVolume * 10));
   }
 
 
@@ -87,23 +93,46 @@ export function Controls({ onShuffle }) {
     // console.log('Playback stopped, track reset, and started playing again');
   }
 
+  const RenderVolumeBar = () => {
+    return (
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginHorizontal: 15 }}>
+        {Array.from({ length: 10 }, (_, i) =>
+          i < volumeLevel ? (
+            <Octicons style={{ marginRight: 5 }} key={i} size={20} color={'#fff'} name={'dot-fill'} />
+          ) : (
+            <Octicons style={{ marginRight: 5 }} key={i} size={20} color={'#fff'} name={'dot'} />
+          )
+        )}
+      </View>
+    );
+  };
+  async function getVolume() {
+    const volume = await TrackPlayer.getVolume();
+    setVolumeLevel(Math.round(volume * 10)); // scale 0–1 to 0–10
+  }
+
+  useEffect(() => { getVolume() }, [])
+
   return (
     <>
-      <View style={{ width: '100%', paddingHorizontal: 20, marginTop: 20 }}>
+      <View style={{ width: '100%', marginTop: 20 }}>
         <View style={{
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
-          marginTop: 30
+          marginTop: 30,
+          marginBottom: 10
         }}>
-          <Pressable onPress={seekBackward}>
-            <Text style={{ color: '#fff' }}>⏪ 10s</Text>
+          <Pressable style={styles.flexRow} onPress={seekBackward}>
+            <AntDesign name={'banckward'} color={'#fff'} size={20} />
+            <Text style={styles.time}>10s</Text>
           </Pressable>
 
           <View style={{ marginHorizontal: 20 }} />
 
-          <Pressable onPress={seekForward}>
-            <Text style={{ color: '#fff' }}>10s ⏩</Text>
+          <Pressable style={styles.flexRow} onPress={seekForward}>
+            <Text style={styles.time}>10s</Text>
+            <AntDesign name={'forward'} color={'#fff'} size={20} />
           </Pressable>
         </View>
         <Slider
@@ -129,43 +158,54 @@ export function Controls({ onShuffle }) {
       <View style={{
         flexDirection: 'row',
         flexWrap: 'wrap', alignItems: 'center',
-        marginVertical: 20
+        marginVertical: 20,
+        justifyContent: 'space-between'
       }}>
-        <Pressable
-          onPress={() => TrackPlayer.skipToPrevious()} >
-          <Text style={{ color: '#fff' }}>Previous</Text>
-        </Pressable>
-        <Pressable style={{ marginHorizontal: 20 }} onPress={handlePlayPress} >
-          <Text style={{ color: '#fff' }}>{playerState == State.Playing ? 'pause' : 'play'}</Text>
-        </Pressable>
-        <Pressable
-          onPress={() => TrackPlayer.skipToNext()} >
-          <Text style={{ color: '#fff' }}>Next</Text>
-        </Pressable>
+        <View style={styles.flexRow}>
+          <Pressable
+            onPress={() => TrackPlayer.skipToPrevious()} >
+            <AntDesign name={'stepbackward'} color={'#fff'} size={30} />
+
+          </Pressable>
+          <Pressable style={{ marginHorizontal: 20 }} onPress={handlePlayPress} >
+            <AntDesign name={playerState == State.Playing ? 'pausecircle' : 'play'} color={'#1DB954'} size={40} />
+          </Pressable>
+          <Pressable
+            onPress={() => TrackPlayer.skipToNext()} >
+            <AntDesign name={'stepforward'} color={'#fff'} size={30} />
+          </Pressable>
+        </View>
         <Pressable
           style={{ marginHorizontal: 20 }}
           onPress={onShuffle} >
-          <Text style={{ color: '#fff' }}>Shuffle</Text>
+          <Entypo name={'shuffle'} color={'#fff'} size={30} />
         </Pressable>
         <Pressable
           onPress={() => handleStopPress()} >
-          <Text style={{ color: '#fff' }}>Stop</Text>
+          <FontAwesome5 name={'stop-circle'} color={'#F46060'} size={35} />
         </Pressable>
-        <View style={{
-          flexDirection: 'row',
-          flexWrap: 'wrap', alignItems: 'center',
-          marginTop: 30
-        }}>
-          <Pressable
-            onPress={() => increaseTrackPlayerVolume()} >
-            <Text style={{ color: '#fff' }}>Volume Up</Text>
-          </Pressable>
-          <View style={{ marginHorizontal: 20 }} />
-          <Pressable
-            onPress={() => decreaseTrackPlayerVolume()} >
-            <Text style={{ color: '#fff' }}>Volume Down</Text>
-          </Pressable></View>
+      </View>
+      <View style={{
+        flexDirection: 'row',
+        flexWrap: 'wrap', alignItems: 'center',
+        marginTop: 30,
+        justifyContent: 'center'
+      }}>
+        <Pressable
+          onPress={() => decreaseTrackPlayerVolume()} >
+          <FontAwesome name={'volume-down'} color={'#1DB954'} size={30} />
+        </Pressable>
+        <RenderVolumeBar />
+        <Pressable
+          onPress={() => increaseTrackPlayerVolume()} >
+          <FontAwesome name={'volume-up'} color={'#1DB954'} size={25} />
+        </Pressable>
       </View>
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  flexRow: { flexDirection: 'row', alignItems: 'center' },
+  time: { fontSize: 12, color: '#fff', marginHorizontal: 5 }
+})
